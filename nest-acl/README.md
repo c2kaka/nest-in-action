@@ -40,3 +40,19 @@ nest g guard login --no-spec --flat
 ```bash
 npm install class-validator class-transformer
 ```
+
+## Use Redis
+### Install redis
+```bash
+npm install redis
+```
+
+### Add redis module
+```bash
+nest g module redis
+```
+
+### Add redis service
+```bash
+nest g service redis
+```

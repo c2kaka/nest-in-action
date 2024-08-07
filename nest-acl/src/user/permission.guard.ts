@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Reflector } from '@nestjs/core';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -16,23 +17,36 @@ export class PermissionGuard implements CanActivate {
   @Inject(Reflector)
   private readonly reflector: Reflector;
 
+  @Inject(RedisService)
+  private readonly redisService: RedisService;
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const user = request.session?.user;
-
-    console.log('[permissionGuard]request.session', request.session);
 
     if (!user) {
       throw new UnauthorizedException('Please login first');
     }
 
-    const foundUser = (await this.userService.findPermissionsByUsername(
-      user.username,
-    )) as any;
-    console.log('foundUser', foundUser);
+    let permissions = (await this.redisService.listGet(
+      `user_${user.username}_permissions`,
+    )) as string[];
+
+    if (permissions.length === 0) {
+      const foundUser = (await this.userService.findPermissionsByUsername(
+        user.username,
+      )) as any;
+
+      permissions = foundUser.permissions.map((p) => p.name);
+      this.redisService.listSet(
+        `user_${user.username}_permissions`,
+        permissions,
+        60 * 60,
+      );
+    }
 
     const permission = this.reflector.get('permission', context.getHandler());
-    if (foundUser.permissions.some((p) => p.name === permission)) {
+    if (permissions.some((p) => p === permission)) {
       return true;
     } else {
       throw new UnauthorizedException('You do not have permission');

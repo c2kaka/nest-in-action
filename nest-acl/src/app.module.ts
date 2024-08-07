@@ -9,6 +9,7 @@ import { User } from './user/entities/user.entity';
 import { Permission } from './user/entities/permission.entity';
 import { AdminModule } from './admin/admin.module';
 import { DeveloperModule } from './developer/developer.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { DeveloperModule } from './developer/developer.module';
     } as any),
     AdminModule,
     DeveloperModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],
